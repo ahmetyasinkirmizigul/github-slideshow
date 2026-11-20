@@ -1,0 +1,43 @@
+@startuml
+title Durum Geçiş Diyagramı
+
+state Init : Hareketsiz bekliyor (hız = 0)
+state Init : Position ve Rotation init'te atanır
+
+state Hareket {
+  state GoToPoint : Hedefe doğrusal, sabit hızla gider
+  state GoToPoint : irtifa tavanı kontrolü yapılır
+
+  state GoDirection : Azimut yönünde sabit hızla gider
+  state GoDirection : menzil her adımda düşülür
+
+  state FollowPath : Waypoint'leri sırayla takip eder
+
+  GoToPoint --> GoToPoint : hedefe varış\n(hız = 0, durum değişmez)
+  GoToPoint -[hidden]-> GoDirection
+  GoDirection --> GoDirection : menzil bitti (maxRange_m ≤ 0)\n(hız = 0, durum değişmez)
+  GoDirection -[hidden]-> FollowPath
+  FollowPath --> FollowPath : waypoint'e varış → sonraki waypoint
+  FollowPath --> FollowPath : son nokta: repeatPath ise başa dön,\ndeğilse kal (hız = 0)
+}
+
+state Stop : HOVER: hız = 0, olduğu yerde asılı kalır
+state Stop : kalıcı değildir, yeni event ile çıkılır
+
+[*] --> Init : init()
+
+Init --> GoToPoint : GO_POINT (targetLLA, speed)
+Init --> GoDirection : GO_DIRECTION (azimuth, speed)
+Init --> FollowPath : FOLLOW_PATH (points, speed, repeatPath)
+Init --> Stop : STOP(HOVER)
+Init --> [*] : REMOVE
+
+Hareket -right-> Stop : STOP(HOVER)
+Stop -left-> Hareket : GO_POINT / GO_DIRECTION / FOLLOW_PATH
+Hareket --> [*] : REMOVE
+Stop --> [*] : REMOVE
+
+note "Hareket durumlarından birindeyken gelen yeni\nGO_POINT / GO_DIRECTION / FOLLOW_PATH event'i\nmodu doğrudan değiştirir." as N1
+N1 .. Hareket
+
+@enduml
