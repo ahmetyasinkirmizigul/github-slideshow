@@ -32,8 +32,8 @@ Init --> GoDirection : GO_DIRECTION (azimuth, speed)
 Init --> FollowPath : FOLLOW_PATH (points, speed, repeatPath)
 Init --> Stop : STOP(HOVER)
 
-Hareket -> Stop : STOP(HOVER)
-Stop -> Hareket : GO_POINT / GO_DIRECTION / FOLLOW_PATH
+Hareket -> Stop : STOP(HOVER)\n<U+00A0>\n<U+00A0>\n<U+00A0>
+Stop -> Hareket : <U+00A0>\n<U+00A0>\n<U+00A0>\nGO_POINT / GO_DIRECTION /\nFOLLOW_PATH
 
 Init --> [*] : REMOVE
 Hareket --> [*] : REMOVE
