@@ -5,30 +5,30 @@ class InputParameters <<Init listesi, init()'ten önce okunur>> {
   + max_Speed_knot : double [knot] = 1000.0
   + min_Speed_knot : double [knot] = 100.0
   + max_Altitude_feet : double [ft] = 50000.0
-  + initLLA : glm::dvec3 [derece, derece, m]
-  + initHPR : glm::dvec3 HPR [derece]
-  + simState : OPSIMEngine::Simulation*
-  + entityId : uint64_t
+  + Position : LLA [derece, derece, m]
+  + Rotation : HPR [derece]
 }
 
 class InputEvents <<EventType>> {
-  + GO_POINT : target_lla[Latitude, Longitude, AltitudeMSL], speed_mps
-  + GO_DIRECTION : azimuth, speedMPS, altitude_m
-  + FOLLOW_PATH : points[Latitude, Longitude, AltitudeMSL], speedMPS, repeatPath
-  + ORBIT : center_lla[Latitude, Longitude, AltitudeMSL]
+  + GO_DIRECTION : Azimuth, Speed, AltitudeMSL (-1: irtifa korunur)
+  + FOLLOW_PATH : Speed, WaypointName[Latitude, Longitude, AltitudeMSL], RepeatPath
   + STOP : StopMode {ORBIT, LAZY, FREEZE}
 }
 
-class FixedConstants <<sabit, kodda varsayılan değerle atanır>> {
+class FixedConstants <<sabit, konfigürasyondan okunmaz>> {
+  + kRebaseDistance_m : double_t [m] = 5000.0
+  + LOS_LOOKAHEAD : double_t [m] = 5000.0
+  + LOS_SAFETY_MARGIN : double_t [m] = 100.0
+  + LOS_RECHECK_DISTANCE : double_t [m] = 4900.0
   + orbit_radius_m_ : double [m] = 5000.0
   + orbit_speed_mps_ : double [m/s] = 150.0
   + goDirClimbAngle_deg_ : double [derece] = 10.0
 }
 
-class RuntimeParameters <<private üyeler, update(dt) ile güncellenir>> {
+class RuntimeParameters <<Scheduler / ECS>> {
   + dt : double [s]
-  + internalState_ : InternalState {None, Init, GoToPoint, GoDirection, FollowPath, Stop}
-  + stopMode_ : StopMode {ORBIT, LAZY, FREEZE, None}
+  + internalState_ : InternalState {Init, GoToPoint, GoDirection, FollowPath, Stop}
+  + stopMode_ : StopMode {ORBIT, LAZY, FREEZE}
   + maxSpeed_mps : double [m/s]
   + maxAlt_m : double [m]
   + targetLLA : glm::dvec3 [derece, derece, m]
@@ -50,15 +50,13 @@ class RuntimeParameters <<private üyeler, update(dt) ile güncellenir>> {
   + refLLA : glm::dvec3 [derece, derece, m]
   + currentLLA : glm::dvec3 [derece, derece, m]
   + currentNED : glm::dvec3 [m]
-  + elevationService_ : Services::IElevationService*
 }
 
 class Outputs <<Log / Durum>> {
-  + state_out_ : lla, ecef, ned, hpr, linearVelocity, speed
-  + getObstructionDistance() : double [m] (engel yoksa -1)
+  + state_out_ : lla, ecef, ned, hpr [derece], linearVelocity [m/s], speed [m/s]
 }
 
-InputParameters --> RuntimeParameters : yapılandırma\n(knot → m/s, ft → m çevrilir)
+InputParameters --> RuntimeParameters : yapılandırma\n(m/s ve m'ye çevrilir)
 InputEvents ..> RuntimeParameters : internalState_ günceller,\nhedef / yön / waypoint atar
 RuntimeParameters --> Outputs : üretir
 
